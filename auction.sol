@@ -2,17 +2,21 @@ pragma solidity ^0.4.24;
 
 pragma experimental ABIEncoderV2;
 
+//Current version:0.4.25+commit.59dbf8f1.Emscripten.clang
+
+
 
 contract Auction {
-    address notary;
     
+    address notary;
+    uint constant numOfBidders  = 20;
     uint auctionStart;
     uint auctionEnd;
     
     address highestBidder;
     uint highestBid;
     
-    address public moderator;
+    address private moderator;
     bool end;
   
     uint256 q;
@@ -39,23 +43,29 @@ contract Auction {
         M = 100;
     }
     
+    struct uvPair
+    {
+        uint u;
+        uint v;
+    }
     
-    struct Bidder {
+    struct Bidder 
+    {
         
         address adr;
-        uint[] u; 
-        uint[] v;
-        
-        //mapping (uint => uint) uvPairs;
-        uint Wu; 
-        uint Wv;
+
+        uvPair[] selectedItems;
+        //TODO: Max number of items to be set as M. use require at appropriate place
+
+        uvPair Wpair;
         
     }
     
-    Bidder[20] public bidders; // Taking 20 bidders at a time;
+    Bidder[] private bidders; // Taking 20 bidders at a time;
+    //TODO: Min & Max number of bidders to be set as in [https://hackernoon.com/building-a-raffle-contract-using-oraclize-e746e5edff6b]
     
     //Bidder[] public bidders; //(optional)
-    address[] public notaries;
+    address[] private notaries;
     
     
     //mapping notary addresses and payment
@@ -69,8 +79,16 @@ contract Auction {
 
     mapping (address => uint) pendingReturns;
     
+    function getRandomNumber(address adr,uint256 modValue) private constant returns(uint256)
+    {
+        //TODO : think of seeds which differ so that random number will be random. or think of some other way
+        return uint(uint256(keccak256(block.timestamp, block.difficulty,adr))%modValue);
+    }
+    
+    
     //function checks whether given pk is unique or not.
-    function checkValidity( address _pk) public constant returns(bool){
+    function checkValidity( address _pk) private returns(bool)
+    {
         //check with all public keys present.
         if(publicKeys[_pk]) return true; // duplicate key
          
@@ -80,6 +98,16 @@ contract Auction {
         
     }
     
+    //to pass struct as param ABIencoder is added.
+    function generatePair(uint x,address adr) private constant returns(uvPair)
+    {
+        uvPair uv;
+        uint modValue = 100; //TODO: should make this Dynamic or Global Parameter !
+        uv.u = getRandomNumber(adr,modValue);
+        uv.v = (x-uv.u)%q;
+        return uv;
+        
+    }
 
     
     //initialize bidders
@@ -88,18 +116,29 @@ contract Auction {
         //verify for unique public key.
         require(!checkValidity(_pk),"Bidder's PublicKey entered already exits!!");
         
-        //initialize bidder.
-        Bidder b ;
-        address baddr = _pk;
-        b.adr = baddr;
+        //assign address of bidder.
+        Bidder B ;
+        B.adr = _pk;
+        
+        //function for generation of (u,v) pair of W.
+        B.Wpair = generatePair(w,B.adr);
         
         //function for generation of (u,v) pairs.
-        //generatePairs(b,w,setItems);
+        for(uint i =0;i<setItems.length;i++)
+        {
+            B.selectedItems.push(generatePair(setItems[i] , B.adr));
+        }
         
+        bidders.push(B);
 
     }
     
-
+    //get count of bidders
+    function getBidders() private view returns(uint)
+    {
+        //return number of bidders
+        return ;
+    }
     
     //initialize notary
     function setNotary( address _pk)
@@ -113,16 +152,22 @@ contract Auction {
         
     }
     
-   
+    function getNotaries() private view returns(uint)
+    {
+        //return number of notaries
+        return ;
+    }
+    
     
     //mapping bidders to notaries.
     //under progress....
     function mapNotaries()
     {
-        uint l = bidders.length;
-        uint index = uint(block.blockhash(block.number-1))%l + 1;
+        uint256 l = bidders.length;
         
-        for(uint i = 0; i<l;i++){
+        for(uint i = 0; i<l;i++)
+        {
+            uint index = getRandomNumber(bidders[i].adr,l);
             biddersNotaries[bidders[i].adr] = notaries[index];
         }
         
