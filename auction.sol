@@ -206,5 +206,29 @@ contract Auction {
             end = true;
             pendingReturns[notary] = highestBid;
         }
-    }   
+    } 
+    
+      // to be done by notary
+    function generate1(uvPair x,uvPair y) public returns(uint)
+    {
+        uint val1=x.u-y.u;
+        uint val2=x.v-y.v;
+        
+        return val1+val2;
+    
+        
+    }
+    // to be done by Auctioner;
+    function compare(uvPair x,uvPair y) public returns (uint)
+    {
+        uint a=generate1(x,y);
+        if(a==0)
+        return 0;
+        else if(a<q/2)
+        return 1;
+        else
+        return 2;
+    }
+    
+    
 }
