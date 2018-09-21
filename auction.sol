@@ -48,6 +48,7 @@ contract Auction {
         uint u;
         uint v;
     }
+    uvPair[5] testarr;
     
     struct Bidder 
     {
@@ -230,5 +231,37 @@ contract Auction {
         return 2;
     }
     
+    //copying elements from input array to global array testarr
+    function insert(uvPair[5] x) public returns (uvPair[5])
+    {
+     for(uint i=0;i<5;i++)
+     testarr[i]=x[i];   
+     
+     return testarr;
+    }
     
+    // Using quicksort to sort the array based on comparisons procedure..
+    function quickSort(uint left, uint right) public returns(uvPair[5])
+    {
+        uint i = left;
+        uint j = right;
+        uvPair pivot = testarr[left + (right - left) / 2];
+        while (i <= j) {
+            while (compare(testarr[i] , pivot)==2) 
+            i++;
+            while (compare(testarr[i] , pivot)==1)
+            j--;
+            if (i <= j) {
+                (testarr[i], testarr[j]) = (testarr[j], testarr[i]);
+                i++;
+                j--;
+            }
+        }
+        if (left < j)
+            quickSort(left, j);
+        if (i < right)
+            quickSort(i, right);
+            
+            return testarr;
+    }
 }
