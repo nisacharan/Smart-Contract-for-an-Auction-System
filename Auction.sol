@@ -13,7 +13,9 @@ contract Auction {
     uint constant numOfBidders  = 20;
     uint auctionStart;
     uint auctionEnd;
-    
+    uint inputtime=5;
+    uint revealtime=1000;
+         
     address highestBidder;
     uint highestBid;
     
@@ -24,13 +26,13 @@ contract Auction {
     uint public M;
     
     //initializing q, M
-    constructor () public //uint256 largePrime, uint TotalNumOfItems
-    {
-        //TODO: generate large prime number
-        q = 541;//largePrime;
-        M = 100;//TotalNumOfItems;
+    // constructor () public //uint256 largePrime, uint TotalNumOfItems
+    // {
+    //     //TODO: generate large prime number
+    //     q = 541;//largePrime;
+    //     M = 100;//TotalNumOfItems;
 
-    }
+    // }
     
     struct uvPair
     {
@@ -72,6 +74,28 @@ contract Auction {
     mapping (address => uint) pendingReturns;
 
 
+
+    modifier onlyBefore (uint _time) {require(now < _time,"You are late"); _;}
+    modifier onlyAfter (uint _time) {require(now > _time, "You are too early"); _;}
+    modifier onlyModerator () {require(moderator == msg.sender, "Only moderator is allowed"); _;}
+    
+    //I didn't understand how to add to changed constructor--- please check and add'
+     
+
+    
+
+     constructor () public {
+         //moderator = msg.sender;
+         auctionStart = inputtime+ block.timestamp;
+         auctionEnd = auctionStart + revealtime; 
+         q = 541;
+         M = 100;
+     }
+    
+
+    
+
+
     function getBiddersLength() view public returns(uint)
     {
         return bidders.length;
@@ -106,9 +130,18 @@ contract Auction {
 
     //initialize bidders
     function setBidder( uvPair w,uvPair[] setItems) public 
-    {
+    
         
+        
+        onlyAfter(auctionStart)
+         
+        onlyBefore(auctionEnd)
+           
+    
+    {
+
         //verify for unique public key.
+        
         require(!checkValidity(msg.sender),"Bidder's PublicKey entered already exits!!");
         
         //assign address of bidder.
@@ -160,18 +193,7 @@ contract Auction {
         
     }
     
-        
-    // modifier onlyBefore (uint _time) {require(now < _time,"You are late"); _;}
-    // modifier onlyAfter (uint _time) {require(now > _time, "You are too early"); _;}
-    // modifier onlyModerator () {require(moderator == msg.sender, "Only moderator is allowed"); _;}
-    
-    //I didn't understand how to add to changed constructor--- please check and add'
-    // constructor (address _notary) public {
-    //     notary = _notary;
-    //     auctionStart = block.timestamp;
-    //     auctionEnd = auctionStart + now;
-    // }
-    
+   
     // function bid() public 
     // payable
     // onlyBefore(auctionEnd)
