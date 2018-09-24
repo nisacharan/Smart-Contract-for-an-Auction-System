@@ -197,57 +197,57 @@ contract("Auction", (accounts) => {
 		})
 
 
-		it("Checking sorting", async()=>{
+		// it("Checking sorting", async()=>{
 			
 
-			var largePrime;
-			generatePrime(8,function(ans){
-				largePrime = ans
-			})
+		// 	var largePrime;
+		// 	generatePrime(8,function(ans){
+		// 		largePrime = ans
+		// 	})
 
-			var q = 541//largePrime.data[0]
-			console.log("q: ",q);
+		// 	var q = 541//largePrime.data[0]
+		// 	console.log("q: ",q);
 
-			var M = generateRandomNumber(1,5);
-			console.log("M: ",M);
+		// 	var M = generateRandomNumber(1,5);
+		// 	console.log("M: ",M);
 			
-			for(var i=8;i<12;i++)
-			{
+		// 	for(var i=8;i<12;i++)
+		// 	{
 		
-				var w = generateRandomNumber(0,q/2);
-				console.log("w: ",w);			
+		// 		var w = generateRandomNumber(0,q/2);
+		// 		console.log("w: ",w);			
 
-				var uv = generatePair(w,largePrime,50,100)
-				console.log("pair: ",uv);
+		// 		var uv = generatePair(w,largePrime,50,100)
+		// 		console.log("pair: ",uv);
 
-				console.log("items selected: ")
-				var itemsArray=[]; 
-				for(var j=0;j<M;j++){
-					var temp = generatePair(j,largePrime,0,20);
-					console.log(temp);
-					const tempItem = { u: temp[0], v: temp[1]};
-					//considering biddr is interested in all the items
-					itemsArray.push(temp)
-				}
+		// 		console.log("items selected: ")
+		// 		var itemsArray=[]; 
+		// 		for(var j=0;j<M;j++){
+		// 			var temp = generatePair(j,largePrime,0,20);
+		// 			console.log(temp);
+		// 			const tempItem = { u: temp[0], v: temp[1]};
+		// 			//considering biddr is interested in all the items
+		// 			itemsArray.push(temp)
+		// 		}
 
 
 
-				const wPair = { u:uv[0],v:uv[1]}
-				const signer = provider.getSigner(accounts[i]);
-				console.log("Address: ",accounts[i])
-				contractInstance2 = contractInstance2.connect(signer);
-				const lenbefore = await contractInstance2.getBiddersLength();
-				const res = await contractInstance2.setBidder(wPair,itemsArray);//,{ gasLimit: 3000000});
-				const lenafter = await contractInstance2.getBiddersLength();
-				console.log("Bidder Added, +",lenafter)
-				// assert.equal(1,lenafter-lenbefore,"Random Bidder Couldn't Register");
-			}
-			const lenOfBidders = await contractInstance2.getBiddersLength();
-			await contractInstance2.quickSort(0,lenOfBidders);
-			var res = await contractInstance2.bidders
-			console.log(">>>strd",res);
+		// 		const wPair = { u:uv[0],v:uv[1]}
+		// 		const signer = provider.getSigner(accounts[i]);
+		// 		console.log("Address: ",accounts[i])
+		// 		contractInstance2 = contractInstance2.connect(signer);
+		// 		const lenbefore = await contractInstance2.getBiddersLength();
+		// 		const res = await contractInstance2.setBidder(wPair,itemsArray);//,{ gasLimit: 3000000});
+		// 		const lenafter = await contractInstance2.getBiddersLength();
+		// 		console.log("Bidder Added, +",lenafter)
+		// 		// assert.equal(1,lenafter-lenbefore,"Random Bidder Couldn't Register");
+		// 	}
+		// 	const lenOfBidders = await contractInstance2.getBiddersLength();
+		// 	await contractInstance2.quickSort(0,lenOfBidders);
+		// 	var res = await contractInstance2.bidders
+		// 	console.log(">>>strd",res);
 
-		})
+		// })
 
 });
 

@@ -144,18 +144,18 @@ contract Auction {
         
         require(!checkValidity(msg.sender),"Bidder's PublicKey entered already exits!!");
 
-        uint256 sum= w.u+w.v;
-        uint checkW = sum%q;
+        // uint256 sum= w.u+w.v;
+        // uint checkW = sum%q;
 
-        require(checkW < q/2 && checkW >=0, "Given pair doesn't translate to a positive W ");
+        // require(checkW < q/2 && checkW >=0, "Given pair doesn't translate to a positive W ");
 
-        for(uint j =0 ;j<setItems.length;j++)
-        {
-            sum= setItems[i].u+setItems[i].v;
-            uint checkM = sum%q;
-            require(checkM>0 && checkM<=M,"Items pairs doesn't translate in given range of M");
+        // for(uint j =0 ;j<setItems.length;j++)
+        // {
+        //     sum= setItems[i].u+setItems[i].v;
+        //     uint checkM = sum%q;
+        //     require(checkM>0 && checkM<=M,"Items pairs doesn't translate in given range of M");
             
-        }
+        // }
         
         //assign address of bidder.
 
