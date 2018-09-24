@@ -9,6 +9,7 @@ pragma experimental ABIEncoderV2;
 contract Auction {
     
     address notary;
+    address public manager;
     uint constant numOfBidders  = 20;
     uint auctionStart;
     uint auctionEnd;
@@ -23,11 +24,12 @@ contract Auction {
     uint public M;
     
     //initializing q, M
-    constructor () public
+    constructor () public //uint256 largePrime, uint TotalNumOfItems
     {
         //TODO: generate large prime number
-        q = 541;
-        M = 100;
+        q = 541;//largePrime;
+        M = 100;//TotalNumOfItems;
+
     }
     
     struct uvPair
@@ -47,30 +49,43 @@ contract Auction {
         uvPair Wpair;    
     }
     
-    Bidder[] private bidders; // Taking 20 bidders at a time;
+
+    Bidder[] public bidders; // Taking 20 bidders at a time;
     //TODO: Min & Max number of bidders to be set as in [https://hackernoon.com/building-a-raffle-contract-using-oraclize-e746e5edff6b]
-    
+    Bidder B;
+
     mapping(uint => bool) isWinner; //used to query if a biddet at index'i' in bidders array is winner or not
-    uint[] private winnerPrice;
-    Bidder[] private winners;
+    uint[] public winnerPrice;
+    Bidder[] public winners;
     
     //Bidder[] public bidders; //(optional)
-    address[] private notaries;
+    address[] public notaries;
     
-    mapping ( address => uint) notaryPayments;
+    mapping ( address => uint)public  notaryPayments;
     
     //keeping track of all public keys for duplicate verification
     mapping ( address => bool) publicKeys;
     
     //mapping bidders to notaries.
-    mapping ( address => address) biddersNotaries;
+    mapping ( address => address)public biddersNotaries;
 
     mapping (address => uint) pendingReturns;
+
+
+    function getBiddersLength() view public returns(uint)
+    {
+        return bidders.length;
+    }
+
+    function getNotariesLength() view public returns(uint)
+    {
+        return notaries.length;
+    }
     
     function getRandomNumber(address adr,uint256 modValue) private constant returns(uint256)
     {
         //TODO : think of seeds which differ so that random number will be random. or think of some other way
-        return uint(uint256(keccak256(block.timestamp, block.difficulty,adr))%modValue);
+        return uint(uint256(keccak256(abi.encodePacked(block.timestamp, block.difficulty,adr)))%modValue);
     }
     
     
@@ -86,17 +101,7 @@ contract Auction {
         
     }
     
-    
-    // //to pass struct as param ABIencoder is added.
-    // function generatePair(uint x,address adr) private constant returns(uvPair)
-    // {
-    //     uvPair uv;
-    //     uint modValue = 100; //TODO: should make this Dynamic or Global Parameter !
-    //     uv.u = getRandomNumber(adr,modValue);
-    //     uv.v = (x-uv.u)%q;
-    //     return uv;
-        
-    // }
+
 
 
     //initialize bidders
@@ -107,18 +112,16 @@ contract Auction {
         require(!checkValidity(msg.sender),"Bidder's PublicKey entered already exits!!");
         
         //assign address of bidder.
-        Bidder B ;
+
         B.adr = msg.sender;
-        
-        //taking input of (u,v) pairs from user.
         B.Wpair = w;
-        
-        for(uint i = 0;i<setItems.length;i++)
+
+        for(uint i=0;i<setItems.length;i++)
         {
             B.selectedItems.push(setItems[i]);
         }
-        bidders.push(B);
 
+        bidders.push(B);
     }
     
 
@@ -138,23 +141,29 @@ contract Auction {
   
     
     //mapping bidders to notaries.
-    //under progress....
-    function mapNotaries()
+
+    function mapNotaries() private
     {
         uint256 l = bidders.length;
         
-        for(uint i = 0; i<l;i++)
+        for(uint i = l-1; i>0;i--)
         {
-            uint index = getRandomNumber(bidders[i].adr,l);
-            biddersNotaries[bidders[i].adr] = notaries[index];
+            uint index = getRandomNumber(bidders[i].adr,i+1);
+            (notaries[index],notaries[i]) = (notaries[i],notaries[index]);
+            //algo-source: https://www.geeksforgeeks.org/shuffle-a-given-array/
+        }
+
+        for(uint j=0;j<notaries.length;j++)
+        {
+            biddersNotaries[bidders[i].adr]= notaries[i];
         }
         
     }
     
         
-    modifier onlyBefore (uint _time) {require(now < _time,"You are late"); _;}
-    modifier onlyAfter (uint _time) {require(now > _time, "You are too early"); _;}
-    modifier onlyModerator () {require(moderator == msg.sender, "Only moderator is allowed"); _;}
+    // modifier onlyBefore (uint _time) {require(now < _time,"You are late"); _;}
+    // modifier onlyAfter (uint _time) {require(now > _time, "You are too early"); _;}
+    // modifier onlyModerator () {require(moderator == msg.sender, "Only moderator is allowed"); _;}
     
     //I didn't understand how to add to changed constructor--- please check and add'
     // constructor (address _notary) public {
@@ -163,31 +172,31 @@ contract Auction {
     //     auctionEnd = auctionStart + now;
     // }
     
-    function bid() public 
-    payable
-    onlyBefore(auctionEnd)
-    {
-        require(msg.value > highestBid, "Bid not enough");
-        if (highestBid != 0)
-        {
-            pendingReturns[highestBidder] = highestBid;
-        }
-        highestBidder = msg.sender;
-        highestBid = msg.value;
-    }
+    // function bid() public 
+    // payable
+    // onlyBefore(auctionEnd)
+    // {
+    //     require(msg.value > highestBid, "Bid not enough");
+    //     if (highestBid != 0)
+    //     {
+    //         pendingReturns[highestBidder] = highestBid;
+    //     }
+    //     highestBidder = msg.sender;
+    //     highestBid = msg.value;
+    // }
     
-    function endAuction() public
-    onlyAfter(auctionEnd)
-    {
-        if(end != true)
-        {
-            end = true;
-            pendingReturns[notary] = highestBid;
-        }
-    } 
+    // function endAuction() public
+    // onlyAfter(auctionEnd)
+    // {
+    //     if(end != true)
+    //     {
+    //         end = true;
+    //         pendingReturns[notary] = highestBid;
+    //     }
+    // } 
     
     // to be done by notary
-    function generate1(uvPair x,uvPair y)  private constant returns(uint)
+    function generate1(uvPair x,uvPair y)  pure private returns(uint)
     {
         uint val1=x.u-y.u;
         uint val2=x.v-y.v;
@@ -222,7 +231,7 @@ contract Auction {
         uint j = right;
         uint mid = left + (right - left) / 2;
         
-        uvPair pivot = bidders[mid].Wpair;
+        uvPair storage pivot = bidders[mid].Wpair;
         
         while (i <= j) {
             while (compare(bidders[i].Wpair ,biddersNotaries[bidders[i].adr], pivot,biddersNotaries[bidders[mid].adr])==2) 
@@ -230,7 +239,11 @@ contract Auction {
             while (compare(bidders[i].Wpair,biddersNotaries[bidders[i].adr], pivot,biddersNotaries[bidders[mid].adr])==1)
             j--;
             if (i <= j) {
-                (bidders[i], bidders[j])  = (bidders[j], bidders[i]);
+                Bidder storage temp = bidders[i];
+                bidders[i] = bidders[j];
+                bidders[j] = temp;
+
+                // (bidders[i], bidders[j])  = (bidders[j], bidders[i]);
                 i++;
                 j--;
             }
@@ -287,3 +300,40 @@ contract Auction {
                 
             }
     }
+
+    //babylonian method for square-root
+    function sqrt(uint x) pure private returns (uint y) 
+    {
+        uint z = (x + 1) / 2;
+        y = x;
+        while (z < y) 
+        {
+            y = z;
+            z = (x / z + z) / 2;
+        }
+    }
+    
+    function priceCalculation() private
+    {
+        for(uint i =0;i<winners.length;i++)
+        {
+            Bidder storage currentWinner = winners[i];
+            for(uint j=0;j < bidders.length;j++)
+            {
+                address notaryWAddress = biddersNotaries[currentWinner.adr];
+                address notaryBAddress = biddersNotaries[bidders[i].adr];
+                if(!isDisjoint(bidders[i].selectedItems,notaryBAddress,currentWinner.selectedItems,notaryWAddress))
+                {
+                    uint si = winners[i].selectedItems.length;
+                    // uint sj = bidders[i].selectedItems.length;
+                    uint uj = bidders[i].Wpair.u;
+                    uint vj = bidders[i].Wpair.v;
+                    uint wj = (uj+vj)%q;
+                    uint pi = wj*sqrt(si);
+                    winnerPrice.push(pi);
+                }
+            }
+        }
+    }
+
+}
