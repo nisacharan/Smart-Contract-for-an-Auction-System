@@ -19,26 +19,13 @@ contract Auction {
     address private moderator;
     bool end;
   
-    uint256 q;
-    uint M;
+    uint256 public q;
+    uint public M;
     
-    
-    // Taking total no of items as 200;
-    /*I think it is better to store u,v pairs
-        for m no need of array because just we need upper limit
-    */
-    // uint[200] m;
-    // struct Bidder {
-    //     address adr;
-    //     uint w;
-    //     uint[100] s; // Taking max itms to be selected by bidders as 100;
-    // }
-    
-
     //initializing q, M
     constructor () public
     {
-        //generate large prime number
+        //TODO: generate large prime number
         q = 541;
         M = 100;
     }
@@ -48,28 +35,28 @@ contract Auction {
         uint u;
         uint v;
     }
-    uvPair[5] testarr;
+
+    // uvPair[5] testarr;
     
     struct Bidder 
     {
-        
         address adr;
-
         uvPair[] selectedItems;
-        //TODO: Max number of items to be set as M. use require at appropriate place
 
-        uvPair Wpair;
-        
+        //TODO: Max number of items to be set as M. use require at appropriate place = setBidder
+        uvPair Wpair;    
     }
     
     Bidder[] private bidders; // Taking 20 bidders at a time;
     //TODO: Min & Max number of bidders to be set as in [https://hackernoon.com/building-a-raffle-contract-using-oraclize-e746e5edff6b]
     
+    mapping(uint => bool) isWinner; //used to query if a biddet at index'i' in bidders array is winner or not
+    uint[] private winnerPrice;
+    Bidder[] private winners;
+    
     //Bidder[] public bidders; //(optional)
     address[] private notaries;
     
-    
-    //mapping notary addresses and payment
     mapping ( address => uint) notaryPayments;
     
     //keeping track of all public keys for duplicate verification
@@ -99,66 +86,56 @@ contract Auction {
         
     }
     
-    //to pass struct as param ABIencoder is added.
-    function generatePair(uint x,address adr) private constant returns(uvPair)
-    {
-        uvPair uv;
-        uint modValue = 100; //TODO: should make this Dynamic or Global Parameter !
-        uv.u = getRandomNumber(adr,modValue);
-        uv.v = (x-uv.u)%q;
-        return uv;
-        
-    }
-
     
+    // //to pass struct as param ABIencoder is added.
+    // function generatePair(uint x,address adr) private constant returns(uvPair)
+    // {
+    //     uvPair uv;
+    //     uint modValue = 100; //TODO: should make this Dynamic or Global Parameter !
+    //     uv.u = getRandomNumber(adr,modValue);
+    //     uv.v = (x-uv.u)%q;
+    //     return uv;
+        
+    // }
+
+
     //initialize bidders
-    function setBidder( address _pk,uint w,uint[] setItems) public {
+    function setBidder( uvPair w,uvPair[] setItems) public 
+    {
         
         //verify for unique public key.
-        require(!checkValidity(_pk),"Bidder's PublicKey entered already exits!!");
+        require(!checkValidity(msg.sender),"Bidder's PublicKey entered already exits!!");
         
         //assign address of bidder.
         Bidder B ;
-        B.adr = _pk;
+        B.adr = msg.sender;
         
-        //function for generation of (u,v) pair of W.
-        B.Wpair = generatePair(w,B.adr);
+        //taking input of (u,v) pairs from user.
+        B.Wpair = w;
         
-        //function for generation of (u,v) pairs.
-        for(uint i =0;i<setItems.length;i++)
+        for(uint i = 0;i<setItems.length;i++)
         {
-            B.selectedItems.push(generatePair(setItems[i] , B.adr));
+            B.selectedItems.push(setItems[i]);
         }
-        
         bidders.push(B);
 
     }
     
-    //get count of bidders
-    function getBidders() private view returns(uint)
-    {
-        //return number of bidders
-        return ;
-    }
+
     
     //initialize notary
-    function setNotary( address _pk)
+    function setNotary() public
     {
-        require(!checkValidity(_pk),"Public Key entered already exits");
+        require(!checkValidity(msg.sender),"Public Key entered already exits");
         
-        notaries.push(_pk);
+        notaries.push(msg.sender);
         
         //making initial payments to zero.
-        notaryPayments[_pk] = 0;
+        notaryPayments[msg.sender] = 0;
         
     }
     
-    function getNotaries() private view returns(uint)
-    {
-        //return number of notaries
-        return ;
-    }
-    
+  
     
     //mapping bidders to notaries.
     //under progress....
@@ -209,59 +186,104 @@ contract Auction {
         }
     } 
     
-      // to be done by notary
-    function generate1(uvPair x,uvPair y) public returns(uint)
+    // to be done by notary
+    function generate1(uvPair x,uvPair y)  private constant returns(uint)
     {
         uint val1=x.u-y.u;
         uint val2=x.v-y.v;
-        
         return val1+val2;
-    
-        
     }
+    
     // to be done by Auctioner;
-    function compare(uvPair x,uvPair y) public returns (uint)
+    function compare(uvPair x,address notary1,uvPair y,address notary2) private returns (uint)
     {
         uint a=generate1(x,y);
+        
+        //------added payment to notary-------
+        
+        //making payment to notary
+        notaryPayments[notary1]+=1;
+        notaryPayments[notary2]+=1;
+        
         if(a==0)
-        return 0;
+        return 0; //means equal
         else if(a<q/2)
-        return 1;
+        return 1; //means x>y
         else
-        return 2;
+        return 2; //means x<y
     }
     
-    //copying elements from input array to global array testarr
-    function insert(uvPair[5] x) public returns (uvPair[5])
-    {
-     for(uint i=0;i<5;i++)
-     testarr[i]=x[i];   
-     
-     return testarr;
-    }
     
+    //removed global array and used directly bidders array.
     // Using quicksort to sort the array based on comparisons procedure..
-    function quickSort(uint left, uint right) public returns(uvPair[5])
+    function quickSort(uint left, uint right) private
     {
         uint i = left;
         uint j = right;
-        uvPair pivot = testarr[left + (right - left) / 2];
+        uint mid = left + (right - left) / 2;
+        
+        uvPair pivot = bidders[mid].Wpair;
+        
         while (i <= j) {
-            while (compare(testarr[i] , pivot)==2) 
+            while (compare(bidders[i].Wpair ,biddersNotaries[bidders[i].adr], pivot,biddersNotaries[bidders[mid].adr])==2) 
             i++;
-            while (compare(testarr[i] , pivot)==1)
+            while (compare(bidders[i].Wpair,biddersNotaries[bidders[i].adr], pivot,biddersNotaries[bidders[mid].adr])==1)
             j--;
             if (i <= j) {
-                (testarr[i], testarr[j]) = (testarr[j], testarr[i]);
+                (bidders[i], bidders[j])  = (bidders[j], bidders[i]);
                 i++;
                 j--;
             }
         }
+        
         if (left < j)
             quickSort(left, j);
         if (i < right)
             quickSort(i, right);
             
-            return testarr;
+            return ;
     }
-}
+
+    //this method uses merge-sort technique. 
+    //give only sorted arrays into it for minimum comparisions in O(mlogn+nlogm)
+    function isDisjoint(uvPair[] arr1,address notary1, uvPair[] arr2,address notary2) private returns(bool)
+    {
+    // Check for same elements using merge like process
+    uint m = arr1.length;
+    uint n = arr2.length;
+    
+        for(uint i=0;i<m;i++)
+        {
+            for(uint j=0;j<n;j++)
+            {
+                if(compare(arr1[i],notary1,arr2[j],notary2)==0) //means they're equal and hence not Disjoint
+                    return false;
+            }
+        }
+        return true;
+    }
+    
+    
+    //----------------deciding winner set--------------------
+    function makeWinnerSelectedItems() private
+    {
+            quickSort(0,bidders.length);
+            
+            winners.push(bidders[0]);
+            
+            for(uint i=1;i<bidders.length;i++)
+            {
+                for(uint j=0;j< winners.length;j++)
+                {
+                    address notary1Address = biddersNotaries[winners[j].adr];
+                    address notary2Address = biddersNotaries[bidders[i].adr];
+                    
+                    if(isDisjoint(winners[j].selectedItems,notary1Address,bidders[i].selectedItems,notary2Address))
+                    {
+                        isWinner[i]=true;
+                        winners.push(bidders[i]);
+                    }
+                }
+                
+            }
+    }
