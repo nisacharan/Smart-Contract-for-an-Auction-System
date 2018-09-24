@@ -25,7 +25,7 @@ contract Auction {
     uint256 public q;
     uint public M;
     
-    //initializing q, M
+    // //initializing q, M
     // constructor () public //uint256 largePrime, uint TotalNumOfItems
     // {
     //     //TODO: generate large prime number
@@ -143,6 +143,19 @@ contract Auction {
         //verify for unique public key.
         
         require(!checkValidity(msg.sender),"Bidder's PublicKey entered already exits!!");
+
+        uint256 sum= w.u+w.v;
+        uint checkW = sum%q;
+
+        require(checkW < q/2 && checkW >=0, "Given pair doesn't translate to a positive W ");
+
+        for(uint j =0 ;j<setItems.length;j++)
+        {
+            sum= setItems[i].u+setItems[i].v;
+            uint checkM = sum%q;
+            require(checkM>0 && checkM<=M,"Items pairs doesn't translate in given range of M");
+            
+        }
         
         //assign address of bidder.
 
