@@ -58,7 +58,7 @@ contract("Auction", (accounts) => {
 			const elem1 = { u:5, v:6};
 			const elem2 = { u:7, v:8};
 			const ar2 = [elem1,elem2]
-			const ar1 = {u:1,v:2};	
+			const ar1 = {u:1070,v:6};	
 
 			
 			const signer = provider.getSigner(accounts[3]);
