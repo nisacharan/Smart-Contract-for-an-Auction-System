@@ -234,7 +234,7 @@ contract Auction {
     // } 
     
     // to be done by notary
-    function generate1(uvPair x,uvPair y)  pure private returns(uint)
+    function generate1(uvPair x,uvPair y)  pure public returns(uint)
     {
         uint val1=x.u-y.u;
         uint val2=x.v-y.v;
@@ -242,7 +242,7 @@ contract Auction {
     }
     
     // to be done by Auctioner;
-    function compare(uvPair x,address notary1,uvPair y,address notary2) private returns (uint)
+    function compare(uvPair x,address notary1,uvPair y,address notary2) public returns (uint)
     {
         uint a=generate1(x,y);
         
@@ -263,7 +263,7 @@ contract Auction {
     
     //removed global array and used directly bidders array.
     // Using quicksort to sort the array based on comparisons procedure..
-    function quickSort(uint left, uint right) private
+    function quickSort(uint left, uint right) public
     {
         uint i = left;
         uint j = right;
@@ -297,7 +297,7 @@ contract Auction {
 
     //this method uses merge-sort technique. 
     //give only sorted arrays into it for minimum comparisions in O(mlogn+nlogm)
-    function isDisjoint(uvPair[] arr1,address notary1, uvPair[] arr2,address notary2) private returns(bool)
+    function isDisjoint(uvPair[] arr1,address notary1, uvPair[] arr2,address notary2) public returns(bool)
     {
     // Check for same elements using merge like process
     uint m = arr1.length;
