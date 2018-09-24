@@ -161,6 +161,9 @@ contract Auction {
     
     //initialize notary
     function setNotary() public
+        onlyAfter(auctionStart)
+         
+        onlyBefore(auctionEnd)
     {
         require(!checkValidity(msg.sender),"Public Key entered already exits");
         
